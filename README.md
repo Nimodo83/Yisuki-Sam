@@ -88,8 +88,8 @@ cd bot-musica-para-discord
 
 ## Server Bots Powered By Cuervo-Team-Supreme 
 
-- [@server]()
+- [server](https://discord.gg/WJZEjQng)
 ## 👨‍💻 Desarrollado por
 
-- [@Christopher Moz](https://github.com/Fort503)
+- [@CuervoOFC](https://github.com/Fort503)
 
