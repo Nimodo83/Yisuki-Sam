@@ -34,8 +34,8 @@ Un bot de discord para administración ee servers y reproducir música en canale
  1. Clona este repositorio:
 
 ```bash
-  git clone https://github.com/Fort503/bot-musica-para-discord
-cd bot-musica-para-discord
+  git clone https://github.com/CuervoOFC/MIYAMURABOT
+cd MIYAMURABOT
 ```
 2. Instala las dependencias:
 ```bash
@@ -43,7 +43,7 @@ cd bot-musica-para-discord
 ```
 3. Ir a index.js y añade tu token de bot:
 ```index.js 
-  renglon 78 entre las "" poner tu token 
+  renglon 77 entre las "" poner tu token 
 ```
 ![App Screenshot](imagenes/2025_0324_114347_Photo.jpg)
 
