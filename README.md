@@ -1,5 +1,6 @@
 <center><img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=MiyamuraBot&fontSize=80&fontAlignY=35&animation=twinkling&fontColor=gradient"/></center>
-### UN BOT PARA (MI AMIGA) YISUKI-SAM ESTO FUE CREADO A PARTIR DE MIYAMURABOT EL VIERNES 28 DE MARZO DEL 2025 A LAS 22:05
+
+# UN BOT PARA (MI AMIGA) YISUKI-SAM ESTO FUE CREADO A PARTIR DE MIYAMURABOT EL VIERNES 28 DE MARZO DEL 2025 A LAS 22:05
 
 # 🎵 Miyamura Music Bot
 
