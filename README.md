@@ -136,7 +136,7 @@ cd MIYAMURABOT
 - [server](https://discord.gg/WJZEjQng)
 ## 👨‍💻 Desarrollado por
 
-- [@CuervoOFC](https://github.com/Fort503)
+- [@CuervoOFC](https://github.com/CuervoOFC)
 
 ___
 
@@ -144,8 +144,6 @@ ___
 
 ___
 
-[![Card](https://github-readme-stats.vercel.app/api/pin/?username=mrbaskan33&repo=discord-botlist&theme=tokyonight)](https://github.com/MrBaskan33/discord-botlist)
+[![Card](https://github-readme-stats.vercel.app/api/pin/?username=CuervoOFC&repo=MIYAMURABOT&theme=tokyonight)](https://github.com/CuervoOFC/MIYAMURABOT)
 
 ___
-
-[![Profile](https://lanyard.cnrad.dev/api/1317568519767982091)](https://discord.com/users/1317568519767982091)
