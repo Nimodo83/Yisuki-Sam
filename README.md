@@ -39,36 +39,36 @@ Un bot de discord para administración ee servers y reproducir música en canale
 
 ## Paso 1: Crear una Aplicaci贸n en Discord
 
-1. Ve al [Portal de Desarrolladores de Discord](https://discord.com/developers/applications) e inicia sesi贸n con tu cuenta de Discord.
-2. Haz clic en el bot贸n **"New Application"**.
-3. Asigna un nombre a tu aplicaci贸n y haz clic en **"Create"**.
+1. Ve al [Portal de Desarrolladores de Discord](https://discord.com/developers/applications) e inicia sesión con tu cuenta de Discord.
+2. Haz clic en el botón **"New Application"**.
+3. Asigna un nombre a tu aplicación y haz clic en **"Create"**.
 
 ## Paso 2: Crear un Bot
 
-1. Dentro de tu aplicaci贸n reci茅n creada, ve a la pesta帽a **"Bot"** en el men煤 de la izquierda.
-2. Haz clic en el bot贸n **"Add Bot"** y confirma la acci贸n.
-3. Ahora deber铆as ver tu bot en la secci贸n de **"Bot"**.
+1. Dentro de tu aplicación recién creada, ve a la pestaña **"Bot"** en el menú de la izquierda.
+2. Haz clic en el botón **"Add Bot"** y confirma la acción.
+3. Ahora deberías ver tu bot en la sección de **"Bot"**.
 
 ## Paso 3: Obtener el Token del Bot
 
-1. En la secci贸n **"Bot"**, haz clic en el bot贸n **"Copy"** debajo del campo **"Token"**. Este token es muy importante ya que es la clave para autenticar tu bot.
+1. En la sección **"Bot"**, haz clic en el botón **"Copy"** debajo del campo **"Token"**. Este token es muy importante ya que es la clave para autenticar tu bot.
 2. Guarda el token en un lugar seguro, ya que lo necesitar谩s m谩s adelante.
 3. [Abre el archivo index.js](https://github.com/CuervoOFC/MIYAMURABOT/blob/main/index.js#L15) y reemplaza `const Token = "YOUR_BOT_TOKEN"` con el token que acabas de copiar:
    ```javascript
-   const Token = "YOUR_BOT_TOKEN"; // Reemplaza 'YOUR_BOT_TOKEN' con el token de tu bot
+   const token = "YOUR_BOT_TOKEN"; // Reemplaza 'YOUR_BOT_TOKEN' con el token de tu bot
    ```
 
 ## Paso 4: Invitar el Bot a un Servidor
 
-1. Ve a la pesta帽a **"OAuth2"** en el men煤 de la izquierda.
-2. En la secci贸n **"OAuth2 URL Generator"**, marca la casilla **"bot"** en **"SCOPES"**.
+1. Ve a la pestaña **"OAuth2"** en el menú de la izquierda.
+2. En la sección **"OAuth2 URL Generator"**, marca la casilla **"bot"** en **"SCOPES"**.
 3. En **"BOT PERMISSIONS"**, selecciona los permisos que desees otorgarle a tu bot.
-4. Copia la URL generada y 谩brela en tu navegador. Selecciona el servidor al que deseas invitar el bot y haz clic en **"Authorize"**.
+4. Copia la URL generada y ábrela en tu navegador. Selecciona el servidor al que deseas invitar el bot y haz clic en **"Authorize"**.
 
 
 ### PASOS
 ### INSTALACIÓN TERMUX 
-[`馃挮 Instalar termux clic aqui`](https://f-droid.org/es/packages/com.termux/)
+[`Instalar termux clic aqui`](https://f-droid.org/es/packages/com.termux/)
 
  1. Clona este repositorio:
  
@@ -148,4 +148,4 @@ ___
 
 ___
 
-[![Profile](https://lanyard.cnrad.dev/api/873182701061021696)](https://discord.com/users/873182701061021696)
+[![Profile](https://lanyard.cnrad.dev/api/1317568519767982091)](https://discord.com/users/1317568519767982091)
